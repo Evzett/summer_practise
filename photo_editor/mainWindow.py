@@ -2,13 +2,14 @@
 import sys
 from collections import deque
 
-from PyQt5.QtGui import QImage, QPixmap, QIcon
+from PyQt5.QtGui import QIcon
 
-import Picture
-from Buttons import GalleryButton, CameraButton, BrightnessButton, CircleButton, NegativeButton
+from photo_editor import Picture
+from photo_editor.Buttons import GalleryButton, CameraButton, BrightnessButton, CircleButton, NegativeButton
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+from photo_editor.CameraWindow import CameraWindow
 from photo_editor.FormBrightness import FormBrightness
 from photo_editor.FormCircle import FormCircle
 
@@ -19,12 +20,13 @@ class MainWindow(QtWidgets.QMainWindow):
     ForwardSignal = QtCore.pyqtSignal()
     def __init__(self):
         super().__init__()
+        self.camera_window = None
         self.windowCircle = None
         self.windowBrightness = None
         self.history = deque()
         self.future = deque()
         self.setupUi()
-        self.picture_module = Picture.Picture()
+        self.picture_module = Picture()
 
 
     def setupUi(self):
@@ -97,6 +99,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ButtonGallery_2.setText("")
         self.ButtonGallery_2.setObjectName("ButtonGallery_2")
         self.verticalLayout.addWidget(self.ButtonGallery_2)
+        self.ButtonGallery_2.clicked.connect(self.open_camera_window)
+
         self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -108,6 +112,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                          "")
         self.TextTakePhoto.setObjectName("TextTakePhoto")
         self.horizontalLayout_4.addWidget(self.TextTakePhoto)
+
         spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem4)
         self.verticalLayout.addLayout(self.horizontalLayout_4)
@@ -128,7 +133,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                       "  background-color: rgba(48, 48, 48, 0); /* Полупрозрачный фон */\n"
                                       "    border: none;\n"
                                       "    outline: none;\n"
-                                      " image: url(../icons/pressed_icons8-up-left-32.png); /* Начальная иконка */\n"
+                                      " image: url(icons/pressed_icons8-up-left-32.png); /* Начальная иконка */\n"
                                       "}\n"
                                       "\n"
                                       "\n"
@@ -147,7 +152,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                          "    background-color: rgba(48, 48, 48, 0); /* Полупрозрачный фон */\n"
                                          "    border: none;\n"
                                          "    outline: none;\n"
-                                         " image: url(../icons/pressed_icon_forward.png); /* Начальная иконка */\n"
+                                         " image: url(icons/pressed_icon_forward.png); /* Начальная иконка */\n"
                                          "}\n"
                                          "\n"
                                          "\n"
@@ -166,7 +171,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                       "   background-color: rgba(48, 48, 48, 0); /* Полупрозрачный фон */\n"
                                       "    border: none;\n"
                                       "    outline: none;\n"
-                                      " image: url(C:/Users/ntise/OneDrive/Рабочий стол/ЛЕТНЯЯ ПРАКТИКА/icon_load.png); /* Начальная иконка */\n"
+                                      " image: url(icons/icon_load); /* Начальная иконка */\n"
                                       "}\n"
                                       "\n"
                                       "\n"
@@ -175,6 +180,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ButtonLoad.setText("")
         self.ButtonLoad.setObjectName("ButtonLoad")
         self.horizontalLayout.addWidget(self.ButtonLoad)
+        self.ButtonLoad.clicked.connect(self.save_photo)
         self.gridLayout_6.addLayout(self.horizontalLayout, 0, 0, 1, 1)
         self.mainPicture = QtWidgets.QLabel(self.centralwidget)
         self.mainPicture.setMinimumSize(QtCore.QSize(800, 750))
@@ -458,7 +464,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.add_action_to_history(self.picture_module.picture)
 
     def negative(self):
-        self.ButtonNegative.setIcon(QIcon("../icons/pressed_znacok.negativ_.png"))
+        self.ButtonNegative.setIcon(QIcon("icons/pressed_znacok.negativ_.png"))
         self.setIconSize(QtCore.QSize(180, 90))
         if self.picture_module.picture is not None:
             self.picture_module.show_negative()
@@ -477,13 +483,30 @@ class MainWindow(QtWidgets.QMainWindow):
             self.mainPicture.setObjectName("mainPicture")
             self.add_action_to_history(self.picture_module.picture)
 
+    def open_camera_window(self):
+        self.camera_window = CameraWindow()
+        self.camera_window.image_captured.connect(self.display_image)
+        self.camera_window.show()
+
+    def display_image(self, image, image_cv2):
+        self.mainPicture.setPixmap(image)
+        self.mainPicture.setScaledContents(True)
+        self.mainPicture.setObjectName("mainPicture")
+        self.picture_module.picture = image_cv2
+        self.picture_module.qt_picture = image
+        self.add_action_to_history(self.picture_module.picture)
+
     def more_brightness(self):
-        self.ButtonBrightness.setIcon(QIcon("../icons/pressed_free-icon-brightness-12411189.png"))
+        self.ButtonBrightness.setIcon(QIcon("icons/pressed_free-icon-brightness-12411189.png"))
         self.ButtonBrightness.setIconSize(QtCore.QSize(64, 64))
         if self.picture_module.picture is not None:
             self.windowBrightness = FormBrightness()
             self.windowBrightness.show()
             self.windowBrightness.BrightnessSignal.connect(self.apply_brightness)
+
+    def save_photo(self):
+        self.picture_module.save_picture_dialog()
+
 
 
     def apply_brightness(self, amount):
@@ -519,17 +542,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.updateIcons()
     def changeIconBack(self):
         if len(self.history) > 1:
-            self.ButtonBack.setIcon(QIcon("../icons/icons8-up-left-32.png"))
+            self.ButtonBack.setIcon(QIcon("icons/icons8-up-left-32.png"))
             self.ButtonBack.setIconSize(QtCore.QSize(32, 16))
         else:
-            self.ButtonBack.setIcon(QIcon("../icons/pressed_icons8-up-left-32.png"))
+            self.ButtonBack.setIcon(QIcon("icons/pressed_icons8-up-left-32.png"))
             self.ButtonBack.setIconSize(QtCore.QSize(32, 16))
     def changeIconForward(self):
         if self.future:
-            self.ButtonForward.setIcon(QIcon("../icons/icon_forward.png"))
+            self.ButtonForward.setIcon(QIcon("icons/icon_forward.png"))
             self.ButtonForward.setIconSize(QtCore.QSize(32, 16))
         else:
-            self.ButtonForward.setIcon(QIcon("../icons/pressed_icon_forward.png"))
+            self.ButtonForward.setIcon(QIcon("icons/pressed_icon_forward.png"))
             self.ButtonForward.setIconSize(QtCore.QSize(32, 16))
 
     def undo(self):
@@ -537,7 +560,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.future.append(self.history.pop())
             previous_action = self.history[-1]
             self.picture_module.picture = previous_action
-            pixmap = self.picture_module.convert_cv_qt(previous_action)
+            pixmap = Picture.convert_cv_qt(previous_action)
             self.mainPicture.setPixmap(pixmap)
             self.mainPicture.setScaledContents(True)
             self.updateIcons()
@@ -548,7 +571,7 @@ class MainWindow(QtWidgets.QMainWindow):
             next_action = self.future.pop()
             self.history.append(next_action)
             self.picture_module.picture = next_action
-            pixmap = self.picture_module.convert_cv_qt(next_action)
+            pixmap = Picture.convert_cv_qt(next_action)
             self.mainPicture.setPixmap(pixmap)
             self.mainPicture.setScaledContents(True)
             self.updateIcons()
@@ -567,8 +590,3 @@ class MainWindow(QtWidgets.QMainWindow):
                                                                 "изображение"))
 
 
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    mainWindow = MainWindow()
-    mainWindow.show()
-    sys.exit(app.exec_())
