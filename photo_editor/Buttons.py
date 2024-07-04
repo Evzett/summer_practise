@@ -57,6 +57,6 @@ class NegativeButton(Button):
         self.default_icon_path = "../icons/znacok.negativ..png"
         self.hover_icon_path = "../icons/hover_znacok.negativ_.png"
         self.setIcon(QIcon(self.default_icon_path))
-        self.setIconSize(QtCore.QSize(180, 90))
+        self.setIconSize(QtCore.QSize(180, 90))jj
 
 

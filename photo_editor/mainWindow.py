@@ -15,6 +15,8 @@ from photo_editor.FormCircle import FormCircle
 
 
 class MainWindow(QtWidgets.QMainWindow):
+    BackSignal = QtCore.pyqtSignal()
+    ForwardSignal = QtCore.pyqtSignal()
     def __init__(self):
         super().__init__()
         self.windowCircle = None
@@ -23,6 +25,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.future = deque()
         self.setupUi()
         self.picture_module = Picture.Picture()
+
 
     def setupUi(self):
         self.setObjectName("MainWindow")
@@ -125,7 +128,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                       "  background-color: rgba(48, 48, 48, 0); /* Полупрозрачный фон */\n"
                                       "    border: none;\n"
                                       "    outline: none;\n"
-                                      " image: url(../icons/icons8-up-left-32.png); /* Начальная иконка */\n"
+                                      " image: url(../icons/pressed_icons8-up-left-32.png); /* Начальная иконка */\n"
                                       "}\n"
                                       "\n"
                                       "\n"
@@ -134,6 +137,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ButtonBack.setText("")
         self.ButtonBack.setObjectName("ButtonBack")
         self.horizontalLayout.addWidget(self.ButtonBack)
+        self.ButtonBack.clicked.connect(self.undo)
         self.ButtonForward = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setStyleStrategy(QtGui.QFont.PreferAntialias)
@@ -143,7 +147,7 @@ class MainWindow(QtWidgets.QMainWindow):
                                          "    background-color: rgba(48, 48, 48, 0); /* Полупрозрачный фон */\n"
                                          "    border: none;\n"
                                          "    outline: none;\n"
-                                         " image: url(../icons/icon_forward.png); /* Начальная иконка */\n"
+                                         " image: url(../icons/pressed_icon_forward.png); /* Начальная иконка */\n"
                                          "}\n"
                                          "\n"
                                          "\n"
@@ -152,6 +156,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ButtonForward.setText("")
         self.ButtonForward.setObjectName("ButtonForward")
         self.horizontalLayout.addWidget(self.ButtonForward)
+        self.ButtonForward.clicked.connect(self.forward)
         self.ButtonLoad = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setStyleStrategy(QtGui.QFont.PreferAntialias)
@@ -420,6 +425,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusbar = QtWidgets.QStatusBar(self)
         self.statusbar.setObjectName("statusbar")
         self.setStatusBar(self.statusbar)
+        self.BackSignal.connect(self.changeIconBack)
+        self.ForwardSignal.connect(self.changeIconForward)
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
@@ -502,9 +509,51 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mainPicture.setObjectName("mainPicture")
         self.add_action_to_history(self.picture_module.picture)
 
+    def updateIcons(self):
+        self.BackSignal.emit()
+        self.ForwardSignal.emit()
+
     def add_action_to_history(self, cv2_photo):
         self.history.append(cv2_photo)
         self.future.clear()
+        self.updateIcons()
+    def changeIconBack(self):
+        if len(self.history) > 1:
+            self.ButtonBack.setIcon(QIcon("../icons/icons8-up-left-32.png"))
+            self.ButtonBack.setIconSize(QtCore.QSize(32, 16))
+        else:
+            self.ButtonBack.setIcon(QIcon("../icons/pressed_icons8-up-left-32.png"))
+            self.ButtonBack.setIconSize(QtCore.QSize(32, 16))
+    def changeIconForward(self):
+        if self.future:
+            self.ButtonForward.setIcon(QIcon("../icons/icon_forward.png"))
+            self.ButtonForward.setIconSize(QtCore.QSize(32, 16))
+        else:
+            self.ButtonForward.setIcon(QIcon("../icons/pressed_icon_forward.png"))
+            self.ButtonForward.setIconSize(QtCore.QSize(32, 16))
+
+    def undo(self):
+        if len(self.history) > 1:
+            self.future.append(self.history.pop())
+            previous_action = self.history[-1]
+            self.picture_module.picture = previous_action
+            pixmap = self.picture_module.convert_cv_qt(previous_action)
+            self.mainPicture.setPixmap(pixmap)
+            self.mainPicture.setScaledContents(True)
+            self.updateIcons()
+
+
+    def forward(self):
+        if self.future:
+            next_action = self.future.pop()
+            self.history.append(next_action)
+            self.picture_module.picture = next_action
+            pixmap = self.picture_module.convert_cv_qt(next_action)
+            self.mainPicture.setPixmap(pixmap)
+            self.mainPicture.setScaledContents(True)
+            self.updateIcons()
+
+
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
