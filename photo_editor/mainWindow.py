@@ -1,5 +1,9 @@
+"""
+mainWindow.py
 
-import sys
+Описание: модуль основного окна графического интерфейса
+
+"""
 from collections import deque
 
 from PyQt5.QtGui import QIcon
@@ -14,11 +18,75 @@ from photo_editor.FormBrightness import FormBrightness
 from photo_editor.FormCircle import FormCircle
 
 
-
 class MainWindow(QtWidgets.QMainWindow):
+    """
+    Класс основного окна графического интерфейса, с использованием библиотеки PyQt5
+
+
+    Аттрибуты:
+
+    camera_window (CameraWindow):
+     окно с камерой
+
+    windowCircle (FormCircle):
+     окно, требующее ввести размеры круга
+
+    windowBrightness (FormBrightness):
+     окно, требующее ввести насколько необходимо увеличить яркость изображения
+
+    history  (collections.deque):
+        Двусторонняя очередь, содержащая историю изменений изображения для возможности отката (undo).
+
+    future (collections.deque):
+        Двусторонняя очередь, содержащая будущие изменения изображения для возможности повторения (redo).
+
+
+    Методы:
+
+    show_picture(): используется для связи с кнопкой "Выбрать фото из галереи", открывает изображение из галереи
+
+    red_channel(): используется для связи с кнопкой "Красный канал", показывает красный канал изображения
+
+    green_channel(): используется для связи с кнопкой "Зеленый канал", показывает зеленый канал изображения
+
+    negative(): используется для связи с кнопкой "Показать негативное изображение", показывает негативное изображение
+
+    blue_channel(): используется для связи с кнопкой "Синий канал", показывает синий канал изображения
+
+    open_camera_window(): используется для связи с кнопкой "Сделать фото", открывает окно с камерой
+
+    display_image(QImage, cv2_image): используется для отображения фото с камеры
+
+    more_brightness(): используется для связи с кнопкой "Увеличить яркость", открывает окно с прибавлением яркости
+
+    save_photo(): используется для связи с кнопкой "Сохранить фото", сохраняет изображение
+
+    apply_brightness(amount): добавляет яркость на фото
+
+    red_circle(): используется для связи с кнопкой "Нарисовать круг" , открывает окно с характеристиками круга
+
+    apply_circle(data_list): рисует круг на изображении
+
+    updateIcons(): обновляет иконки кнопок
+
+    add_action_to_history(): добавляет действие в историю действий
+
+    changeIconBack(): меняет иконку кнопки "Назад"
+
+    changeIconForward(): меняет иконку кнопки "Вперед"
+
+    undo(): используется для связи с кнопкой "Назад", отменяет действие
+
+    forward(): используется для связи с кнопкой "Вперед", отменяет отмену действия
+    """
     BackSignal = QtCore.pyqtSignal()
     ForwardSignal = QtCore.pyqtSignal()
+
     def __init__(self):
+        """
+        Инициализация объекта
+
+        """
         super().__init__()
         self.camera_window = None
         self.windowCircle = None
@@ -28,8 +96,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setupUi()
         self.picture_module = Picture()
 
-
     def setupUi(self):
+        """
+            Устанавливает и настраивает пользовательский интерфейс основного окна приложения.
+
+            Функция выполняет следующие действия:
+                - Задает размеры и стили основного окна.
+                - Создает и настраивает центральный виджет с помощью сетки и вертикальных/горизонтальных компоновок.
+                - Добавляет и настраивает кнопки с различными функциями, такими как:
+                    - Переход к галерее изображений.
+                    - Открытие окна камеры.
+                    - Увеличение яркости.
+                    - Применение негативного фильтра.
+                    - Обработка цветовых каналов (красный, зеленый, синий).
+                    - Добавляет текстовые метки для описания действий.
+                    - Устанавливает обработчики событий для кнопок.
+
+            """
+
         self.setObjectName("MainWindow")
         self.resize(1404, 889)
         self.setAutoFillBackground(False)
@@ -438,6 +522,11 @@ class MainWindow(QtWidgets.QMainWindow):
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def show_picture(self):
+        """
+        Метод, связанный с кнопкой ButtonGallery ("Выбрать фото"),
+        использует модуль модуль Picture для загрузки изображения из галереи
+        :return:
+        """
         path = self.picture_module.load_picture()
         if path:
             self.mainPicture.setPixmap(QtGui.QPixmap(self.picture_module.path))
@@ -446,6 +535,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.add_action_to_history(self.picture_module.picture)
 
     def red_channel(self):
+        """
+        Метод, связанный  с кнопкой RedButton,
+        использует модуль Picture для показа красного канала изображения
+        :return:
+        """
         if self.picture_module.picture is not None:
             self.picture_module.show_red()
             pixmap = self.picture_module.qt_picture
@@ -455,6 +549,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.add_action_to_history(self.picture_module.picture)
 
     def green_channel(self):
+        """
+        Метод, связанный с кнопкой GreenButton,
+        использует модуль Picture для показа зеленого канала изображения
+        :return:
+        """
         if self.picture_module.picture is not None:
             self.picture_module.show_green()
             pixmap = self.picture_module.qt_picture
@@ -464,6 +563,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.add_action_to_history(self.picture_module.picture)
 
     def negative(self):
+        """
+        Метод, связанный с кнопкой ButtonNegative("Показать негативное изображение"),
+        использует модуль Picture для показа негативного изображения
+        :return:
+        """
         self.ButtonNegative.setIcon(QIcon("icons/pressed_znacok.negativ_.png"))
         self.setIconSize(QtCore.QSize(180, 90))
         if self.picture_module.picture is not None:
@@ -475,6 +579,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.add_action_to_history(self.picture_module.picture)
 
     def blue_channel(self):
+        """
+       Метод, связанный с кнопкой BlueButton,
+       использует модуль Picture для показа синего канала изображения
+       :return:
+       """
+
         if self.picture_module.picture is not None:
             self.picture_module.show_blue()
             pixmap = self.picture_module.qt_picture
@@ -484,11 +594,20 @@ class MainWindow(QtWidgets.QMainWindow):
             self.add_action_to_history(self.picture_module.picture)
 
     def open_camera_window(self):
+        """
+       Метод, связанный с кнопкой ButtonGallery_2("Сделать фото"),
+       использует модуль CameraWindow, открывает окно с камерой
+       :return:
+       """
         self.camera_window = CameraWindow()
         self.camera_window.image_captured.connect(self.display_image)
         self.camera_window.show()
 
     def display_image(self, image, image_cv2):
+        """
+        Метод, отображающий фото с камеры на главном окне, при нажатии кнопки "Сделать фото"
+        на окне с камерой
+        """
         self.mainPicture.setPixmap(image)
         self.mainPicture.setScaledContents(True)
         self.mainPicture.setObjectName("mainPicture")
@@ -497,6 +616,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_action_to_history(self.picture_module.picture)
 
     def more_brightness(self):
+        """
+               Метод, связанный с кнопкой ButtonBrightness("Увеличить яркость"),
+               использует модуль FormBrightness, меняет иконку кнопки, а также
+               открывает окно яркости
+               :return:
+               """
+
         self.ButtonBrightness.setIcon(QIcon("icons/pressed_free-icon-brightness-12411189.png"))
         self.ButtonBrightness.setIconSize(QtCore.QSize(64, 64))
         if self.picture_module.picture is not None:
@@ -505,11 +631,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.windowBrightness.BrightnessSignal.connect(self.apply_brightness)
 
     def save_photo(self):
+        """
+        Метод сохраняет фото, используяя модуль Picture
+        :return:
+        """
         self.picture_module.save_picture_dialog()
 
-
-
-    def apply_brightness(self, amount):
+    def apply_brightness(self, amount: int):
+        """
+        Метод увеличивает яркость изображения, используя модуль Picture
+        :param amount: число, на сколько необходимо увеличить яркость
+        :return:
+        """
         self.picture_module.brighten(amount)
         pixmap = self.picture_module.qt_picture
         self.mainPicture.setPixmap(pixmap)
@@ -518,12 +651,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_action_to_history(self.picture_module.picture)
 
     def red_circle(self):
+        """
+        Метод, открывающий окно с характеристиками круга, связан с кнопкой ButtonRedCircle("Нарисовать красный круг")
+        :return:
+        """
         if self.picture_module.picture is not None:
             self.windowCircle = FormCircle()
             self.windowCircle.show()
             self.windowCircle.CircleSignal.connect(self.apply_circle)
 
-    def apply_circle(self, data_list):
+    def apply_circle(self, data_list: list):
+        """
+        Метод, рисующий круг на изображении, использует модуль Picture
+        :param data_list: координаты, радиус и ширина линии рисуемого круга
+        :return:
+        """
         x, y, radius, line_size = data_list
         self.picture_module.draw_circle(x, y, radius, line_size)
         pixmap = self.picture_module.qt_picture
@@ -533,21 +675,34 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_action_to_history(self.picture_module.picture)
 
     def updateIcons(self):
+        """
+        Метод, обновляющий иконки на кнопках "Отменить действие" и "Отменить отмену действия"
+        :return:
+        """
         self.BackSignal.emit()
         self.ForwardSignal.emit()
 
     def add_action_to_history(self, cv2_photo):
+        """
+        Метод, добавляющий изображение в cv2 формате в очередь прошлых действий
+        :param cv2_photo: фото в формате cv2(многомерный список)
+        :return:
+        """
         self.history.append(cv2_photo)
         self.future.clear()
         self.updateIcons()
+
     def changeIconBack(self):
+        """Меняет иконку кнопки "Отменить действие" """
         if len(self.history) > 1:
             self.ButtonBack.setIcon(QIcon("icons/icons8-up-left-32.png"))
             self.ButtonBack.setIconSize(QtCore.QSize(32, 16))
         else:
             self.ButtonBack.setIcon(QIcon("icons/pressed_icons8-up-left-32.png"))
             self.ButtonBack.setIconSize(QtCore.QSize(32, 16))
+
     def changeIconForward(self):
+        """"Меняет иконку кнопки "Отменить отмену действия" """
         if self.future:
             self.ButtonForward.setIcon(QIcon("icons/icon_forward.png"))
             self.ButtonForward.setIconSize(QtCore.QSize(32, 16))
@@ -556,6 +711,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ButtonForward.setIconSize(QtCore.QSize(32, 16))
 
     def undo(self):
+        """Метод, связанный с кнопкой ButtonBack("Отменить действие"), отменяет действие:)"""
         if len(self.history) > 1:
             self.future.append(self.history.pop())
             previous_action = self.history[-1]
@@ -565,8 +721,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.mainPicture.setScaledContents(True)
             self.updateIcons()
 
-
     def forward(self):
+        """Метод, связанный с кнопкой ButtonForward("Отменить отмену действия"), отменяет отмену действия:)"""
         if self.future:
             next_action = self.future.pop()
             self.history.append(next_action)
@@ -576,9 +732,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.mainPicture.setScaledContents(True)
             self.updateIcons()
 
-
-
     def retranslateUi(self):
+        """
+        Устанавливает текст для элементов интерфейса.
+        """
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("MainWindow", "Редактор фото"))
         self.TextAddPicture.setText(_translate("MainWindow", "Выбрать фото"))
@@ -588,5 +745,3 @@ class MainWindow(QtWidgets.QMainWindow):
                                                               "круг"))
         self.TextAShowNegative.setText(_translate("MainWindow", "Показать негативное\n"
                                                                 "изображение"))
-
-
