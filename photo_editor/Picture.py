@@ -4,10 +4,14 @@
 Этот модуль предоставляет класс Picture, который позволяет загружать,
 сохранять и обрабатывать изображения, а также отображать их с использованием PyQt5.
 """
+import os
+import shutil
+import tempfile
 
 import cv2
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QApplication, QFileDialog
+import numpy as np
 
 
 class Picture:
@@ -45,8 +49,10 @@ class Picture:
             options=options
         )
         if file_name:
-            self.picture = cv2.imread(file_name)
-            self.path = file_name
+            with open(file_name, 'rb') as file:
+                file_bytes = np.asarray(bytearray(file.read()), dtype=np.uint8)
+                self.picture = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+                self.path = file_name
 
             return file_name
         return None
@@ -65,11 +71,18 @@ class Picture:
                 options=options
             )
             if file_name:
+                temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
+                cv2.imwrite(temp_file.name, self.picture)
+                temp_file.close()
+
                 if file_name.lower().endswith(('.png', '.jpeg', '.jpg')):
-                    cv2.imwrite(file_name, self.picture)
+                    shutil.move(temp_file.name, file_name)
                 else:
-                    # Если пользователь не указал расширение, добавим .png по умолчанию
-                    cv2.imwrite(file_name + '.png', self.picture)
+                    shutil.move(temp_file.name, file_name + '.png')
+
+                # Убедимся, что временный файл удален, если что-то пошло не так
+                if os.path.exists(temp_file.name):
+                    os.remove(temp_file.name)
 
     def show_red(self):
         """
